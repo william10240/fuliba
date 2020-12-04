@@ -1,0 +1,1 @@
+cd ./ && cls && go run app.go

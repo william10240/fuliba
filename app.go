@@ -23,7 +23,7 @@ var logger = logrus.New()
 var APP_PATH, _ = os.Getwd()
 
 // 定义 图片目录
-var IMG_PATH = path.Join(APP_PATH, "fuliimages2")
+var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages2")
 
 const url = "https://fuliba2020.net/category/flhz"
 
@@ -225,13 +225,11 @@ func _request(url string) (*http.Response, error) {
 }
 
 func main() {
-
 	for i := 1; i < 8; i++ {
 		get_list(i)
 	}
-	//get_list(1)
 	logger.Info("请求完成,一小时后重试")
-	time.After(60 * 60 * 1000)
+	time.Sleep(60 * 60 * time.Second)
 	main()
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./goimghdr"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -32,17 +33,6 @@ func init() {
 	logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.SetOutput(os.Stdout)
 	logger.SetLevel(logrus.InfoLevel)
-}
-
-func main() {
-
-	for i := 1; i < 8; i++ {
-		get_list(i)
-	}
-	//get_list(1)
-	logger.Info("请求完成,一小时后重试")
-	time.After(60 * 60 * 1000)
-	main()
 }
 
 // 获取 列表页
@@ -168,7 +158,7 @@ func save_img(img_src, img_path string) {
 
 	response, err := _request(img_src)
 	if err != nil {
-		logger.Error("--------图片请求失败")
+		logger.Error("--------图片请求失败:" + img_src)
 		//logger.Error(err)
 		return
 	}
@@ -179,6 +169,21 @@ func save_img(img_src, img_path string) {
 		return
 	}
 	defer response.Body.Close()
+
+	// 如果文件名没有后缀
+	if path.Ext(img_src) == "" {
+		ext, err := goimghdr.WhatFromReader(bytes.NewReader(robots))
+		if err != nil {
+			logger.Error("--------图片解析失败:" + img_src)
+			logger.Error("              地址:" + img_path)
+			return
+		}
+		if ext == "jpeg" {
+			ext = "jpg"
+		}
+		img_path = img_path + "." + ext
+	}
+
 	file, err := os.Create(img_path)
 	if err != nil {
 		logger.Error("--------图片创建失败:" + img_src)
@@ -209,7 +214,25 @@ func _request(url string) (*http.Response, error) {
 	//处理返回结果
 	response, err := client.Do(reqest)
 
+	if err != nil {
+		return response, err
+	}
+	if response.StatusCode != 200 {
+		return response, http.ErrMissingFile
+	}
+
 	return response, err
+}
+
+func main() {
+
+	for i := 1; i < 8; i++ {
+		get_list(i)
+	}
+	//get_list(1)
+	logger.Info("请求完成,一小时后重试")
+	time.After(60 * 60 * 1000)
+	main()
 }
 
 func main1() {
@@ -239,4 +262,8 @@ func main1() {
 	written, _ := io.Copy(writer, reader)
 	fmt.Printf("Total length: %d", written)
 
+}
+
+func main2() {
+	save_img("https://tva1.sinaimg.cn/large/007qbgWbgy1geaz4l0mqpj30m80tm4ea.jpg", "d:/111/007qbgWbgy1geaz4l0mqpj30m80tm4ea.jpg")
 }

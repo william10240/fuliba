@@ -33,6 +33,9 @@ func init() {
 	logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.SetOutput(os.Stdout)
 	logger.SetLevel(logrus.InfoLevel)
+	
+	println("----------当前运行路径: " + APP_PATH + " ----------")
+	println("----------图片存储路径: " + IMG_PATH + " ----------")
 }
 
 // 获取 列表页

@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -29,11 +30,23 @@ const url = "https://fuliba2020.net/category/flhz"
 
 var reg = regexp.MustCompile(`(.*?)福利汇总第(.*?)期`)
 
+type MyFormatter struct{}
+
+func (s *MyFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	timestamp := time.Now().Local().Format("0000/00/00 00:00:00")
+	msg := fmt.Sprintf("%s [%s] %s\n", timestamp, strings.ToUpper(entry.Level.String()), entry.Message)
+	return []byte(msg), nil
+}
+
 func init() {
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	APP_PATH = strings.Replace(APP_PATH, "\\", "/",-1)
+	IMG_PATH = strings.Replace(IMG_PATH, "\\", "/",-1)
+
+	//logger.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetFormatter(new(MyFormatter))
 	logger.SetOutput(os.Stdout)
 	logger.SetLevel(logrus.InfoLevel)
-	
+
 	println("----------当前运行路径: " + APP_PATH + " ----------")
 	println("----------图片存储路径: " + IMG_PATH + " ----------")
 }

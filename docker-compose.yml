@@ -1,0 +1,16 @@
+
+version: '2'
+    
+services:
+  fuli:
+    image: golang:alpine
+    volumes:
+      - ./:/app
+      - /data/media/picture:/fuliimages  # 自定义保存路径请修改这行冒号前面的路径,推荐使用绝对路径
+    working_dir: /app
+    #command: 'ls -all'
+    command: '/bin/sh -c "go env -w GOPROXY=https://goproxy.cn;go run app.go"'
+    restart: always
+
+
+

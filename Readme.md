@@ -15,3 +15,22 @@
 // 定义 图片目录
 var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages2")
 ```
+
+## Docker 运行
+
+```
+1. 编译
+docker run -it --rm -v/data/git/fuliimg_go:/app -w/app golang:alpine /bin/sh
+go env -w GOPROXY=https://goproxy.cn
+go build
+chmod +x fuliimg
+
+2. 运行,使用docker-compose
+docker-compose up
+
+3. 运行,使用docker
+docker run -v/程序目录:/app -v/数据目录:/fuliimages -w/app golang:alpine /app/fuliimg
+
+
+```
+

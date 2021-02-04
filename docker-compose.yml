@@ -4,6 +4,7 @@ version: '2'
 services:
   fuli:
     image: golang:alpine
+    container_name: fuliimg
     volumes:
       - ./:/app
       - /data/media/picture:/fuliimages  # 自定义保存路径请修改这行冒号前面的路径,推荐使用绝对路径

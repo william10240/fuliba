@@ -1,9 +1,0 @@
-docker run -it --rm -v/data/git/fuliimg_go:/app -w/app golang:alpine /bin/sh -c "go env -w GOPROXY=https://goproxy.cn;go run app.go"
-
-
-go env -w GO111MODULE=on
-
-
-go env -w GOPROXY=https://goproxy.cn,https://goproxy.io,direct
-
-

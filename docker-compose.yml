@@ -9,6 +9,12 @@ services:
       - ./:/app
       - /data/media/picture:/fuliimages  # 自定义保存路径请修改这行冒号前面的路径,推荐使用绝对路径
     working_dir: /app
+    user: "1000:1000"
+    environment:
+      - DOCKER_USER:william
+    environment:
+      - GO111MODULE=on
+      - GOPROXY=https://goproxy.cn,https://proxy.golang.org,direct
     command: '/app/fuliimg'
     restart: always
 

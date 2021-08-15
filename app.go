@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fuliimg/goimghdr"
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/sirupsen/logrus"
+	"fuliimg/goimghdr"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/sirupsen/logrus"
 )
 
 var logger = logrus.New()
@@ -39,8 +40,8 @@ func (s *MyFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func init() {
-	APP_PATH = strings.Replace(APP_PATH, "\\", "/",-1)
-	IMG_PATH = strings.Replace(IMG_PATH, "\\", "/",-1)
+	APP_PATH = strings.Replace(APP_PATH, "\\", "/", -1)
+	IMG_PATH = strings.Replace(IMG_PATH, "\\", "/", -1)
 
 	//logger.SetFormatter(&logrus.JSONFormatter{})
 	logrus.SetFormatter(new(MyFormatter))
@@ -241,12 +242,17 @@ func _request(url string) (*http.Response, error) {
 }
 
 func main() {
-	for i := 1; i < 8; i++ {
-		get_list(i)
+	if len(os.Args) > 1 {
+		get_page(os.Args[1], os.Args[2])
+		logger.Info("手动下载完成")
+	} else {
+		for i := 1; i < 8; i++ {
+			get_list(i)
+		}
+		logger.Info("请求完成,一小时后重试")
+		time.Sleep(60 * 60 * time.Second)
+		main()
 	}
-	logger.Info("请求完成,30分钟后重试")
-	time.Sleep(30 * 60 * time.Second)
-	main()
 }
 
 func main1() {

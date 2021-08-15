@@ -26,7 +26,7 @@ var APP_PATH, _ = os.Getwd()
 // 定义 图片目录
 var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages")
 
-const url = "https://fuliba2021.net/tag/flhz"
+const url = "https://fuliba2021.net/flhz"
 
 var reg = regexp.MustCompile(`(.*?)福利汇总第(.*?)期`)
 
@@ -244,8 +244,8 @@ func main() {
 	for i := 1; i < 8; i++ {
 		get_list(i)
 	}
-	logger.Info("请求完成,一小时后重试")
-	time.Sleep(60 * 60 * time.Second)
+	logger.Info("请求完成,30分钟后重试")
+	time.Sleep(30 * 60 * time.Second)
 	main()
 }
 

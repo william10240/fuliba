@@ -28,6 +28,7 @@ var APP_PATH, _ = os.Getwd()
 var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages")
 
 const url = "https://fuliba2021.net/flhz"
+const url_home = "https://fuliba2021.net"
 
 var reg = regexp.MustCompile(`(.*?)福利汇总第(.*?)期`)
 
@@ -52,6 +53,37 @@ func init() {
 	println("----------图片存储路径: " + IMG_PATH + " ----------")
 }
 
+// 获取 首页
+func get_home() {
+	res, err := _request(url_home)
+	if err != nil {
+		logger.Error("列表页请求失败:" + url_home)
+		//logger.Error(err)
+		return
+	}
+
+	doc, err := goquery.NewDocumentFromResponse(res)
+	if err != nil {
+		logger.Error("首页解析失败:" + url_home)
+		//logger.Error(err)
+		return
+	}
+	logger.Info("首页请求成功:" + url_home)
+
+	els := doc.Find("h2 a")
+	els.Each(func(i int, el *goquery.Selection) {
+		// 准备 参数
+		content_title, _ := el.Attr("title")
+		tag := reg.FindStringSubmatch(content_title)
+		if len(tag) > 0 {
+			page_url, _ := el.Attr("href")
+			// 测试查看参数
+			logger.Info(page_url + "  " + content_title)
+			// 开始调用 get_page
+			get_page(page_url, content_title)
+		}
+	})
+}
 // 获取 列表页
 func get_list(list_index int) {
 	list_url := url
@@ -92,13 +124,11 @@ func get_page(page_url, page_title string) {
 	res, err := _request(page_url)
 	if err != nil {
 		logger.Error("--内容页请求失败:" + page_url)
-		//logger.Error(err)
 		return
 	}
 	doc, err := goquery.NewDocumentFromResponse(res)
 	if err != nil {
 		logger.Error("--内容页解析失败:" + page_url)
-		//logger.Error(err)
 		return
 	}
 	logger.Info("--内容页请求开始:" + page_url)
@@ -108,9 +138,10 @@ func get_page(page_url, page_title string) {
 		// 准备 参数
 		content_url, _ := el.Attr("href")
 		content_text := el.Text()
+		// 测试查看参数
+		logger.Debug("content_url:" + content_url +"content_text:" + content_text)
 		// 开始调用 get_page
 		get_content(content_url, page_title, content_text)
-
 	})
 }
 
@@ -246,6 +277,9 @@ func main() {
 		get_page(os.Args[1], os.Args[2])
 		logger.Info("手动下载完成")
 	} else {
+		// 那啥情况下，最新一起福利汇总不会再列表页出现， R U kidding me? Mr.long
+		get_home()
+		// 在去请求列表页
 		for i := 1; i < 8; i++ {
 			get_list(i)
 		}

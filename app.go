@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -25,7 +26,8 @@ var logger = logrus.New()
 var APP_PATH, _ = os.Getwd()
 
 // 定义 图片目录
-var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages")
+//var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages")
+var IMG_PATH = path.Join("E:","Download","fuliimages")
 
 const url = "https://fuliba2021.net/flhz"
 const url_home = "https://fuliba2021.net"
@@ -39,6 +41,8 @@ func (s *MyFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	msg := fmt.Sprintf("%s [%s] %s\n", timestamp, strings.ToUpper(entry.Level.String()), entry.Message)
 	return []byte(msg), nil
 }
+
+var wg sync.WaitGroup
 
 func init() {
 	APP_PATH = strings.Replace(APP_PATH, "\\", "/", -1)
@@ -55,17 +59,19 @@ func init() {
 
 // 获取 首页
 func get_home() {
+	defer wg.Done()
 	res, err := _request(url_home)
 	if err != nil {
 		logger.Error("列表页请求失败:" + url_home)
 		//logger.Error(err)
 		return
 	}
+	defer res.Body.Close()
 
-	doc, err := goquery.NewDocumentFromResponse(res)
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		logger.Error("首页解析失败:" + url_home)
-		//logger.Error(err)
+		logger.Error(err)
 		return
 	}
 	logger.Info("首页请求成功:" + url_home)
@@ -80,12 +86,14 @@ func get_home() {
 			// 测试查看参数
 			logger.Info(page_url + "  " + content_title)
 			// 开始调用 get_page
-			get_page(page_url, content_title)
+			wg.Add(1)
+			go get_page(page_url, content_title)
 		}
 	})
 }
 // 获取 列表页
 func get_list(list_index int) {
+	defer wg.Done()
 	list_url := url
 	if list_index > 1 {
 		list_url = fmt.Sprintf("%s%s%d", url, "/page/", list_index)
@@ -97,7 +105,8 @@ func get_list(list_index int) {
 		//logger.Error(err)
 		return
 	}
-	doc, err := goquery.NewDocumentFromResponse(res)
+	defer res.Body.Close()
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		logger.Error("列表页解析失败:" + list_url)
 		//logger.Error(err)
@@ -113,20 +122,22 @@ func get_list(list_index int) {
 		// 测试查看参数
 		logger.Debug("content_title:" + content_title)
 		// 开始调用 get_page
-		get_page(page_url, content_title)
+		wg.Add(1)
+		go get_page(page_url, content_title)
 	})
 
 }
 
 // 获取 内容页
 func get_page(page_url, page_title string) {
-
+	defer wg.Done()
 	res, err := _request(page_url)
 	if err != nil {
 		logger.Error("--内容页请求失败:" + page_url)
 		return
 	}
-	doc, err := goquery.NewDocumentFromResponse(res)
+	defer res.Body.Close()
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		logger.Error("--内容页解析失败:" + page_url)
 		return
@@ -141,20 +152,22 @@ func get_page(page_url, page_title string) {
 		// 测试查看参数
 		logger.Debug("content_url:" + content_url +"content_text:" + content_text)
 		// 开始调用 get_page
-		get_content(content_url, page_title, content_text)
+		wg.Add(1)
+		go get_content(content_url, page_title, content_text)
 	})
 }
 
 // 获取 内容 分页
 func get_content(content_url, content_title, content_index string) {
-
+	defer wg.Done()
 	res, err := _request(content_url)
 	if err != nil {
 		logger.Error("----详情页请求失败:" + content_index + ":" + content_title)
 		//logger.Error(err)
 		return
 	}
-	doc, err := goquery.NewDocumentFromResponse(res)
+	defer res.Body.Close()
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		logger.Error("----详情页解析失败:" + content_index + ":" + content_title)
 		//logger.Error(err)
@@ -173,13 +186,15 @@ func get_content(content_url, content_title, content_index string) {
 		}
 		img_path := path.Join(IMG_PATH, tag[1], tag[2], content_index, path.Base(img_src))
 		// 开始调用 save_img
-		save_img(img_src, img_path)
+		wg.Add(1)
+		go save_img(img_src, img_path)
 	})
 
 }
 
 // 保存图片
 func save_img(img_src, img_path string) {
+	defer wg.Done()
 	logger.Debug("------开始下载图片:" + img_src)
 	// 检测文件已近下载过
 	if _, err := os.Stat(img_path); err == nil {
@@ -204,19 +219,19 @@ func save_img(img_src, img_path string) {
 		}
 	}
 
-	response, err := _request(img_src)
+	res, err := _request(img_src)
 	if err != nil {
 		logger.Error("--------图片请求失败:" + img_src)
 		//logger.Error(err)
 		return
 	}
-	robots, err := ioutil.ReadAll(response.Body)
+	defer res.Body.Close()
+	robots, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		logger.Error("--------图片读取失败:" + img_src)
 		logger.Error("              地址:" + img_path)
 		return
 	}
-	defer response.Body.Close()
 
 	// 如果文件名没有后缀
 	if path.Ext(img_src) == "" {
@@ -233,6 +248,7 @@ func save_img(img_src, img_path string) {
 	}
 
 	file, err := os.Create(img_path)
+	defer file.Close()
 	if err != nil {
 		logger.Error("--------图片创建失败:" + img_src)
 		logger.Error("              地址:" + img_path)
@@ -268,21 +284,25 @@ func _request(url string) (*http.Response, error) {
 	if response.StatusCode != 200 {
 		return response, http.ErrMissingFile
 	}
-
 	return response, err
 }
 
 func main() {
 	if len(os.Args) > 1 {
-		get_page(os.Args[1], os.Args[2])
+		wg.Add(1)
+		go get_page(os.Args[1], os.Args[2])
+		wg.Wait()
 		logger.Info("手动下载完成")
 	} else {
 		// 那啥情况下，最新一起福利汇总不会再列表页出现， R U kidding me? Mr.long
-		get_home()
+		wg.Add(1)
+		go get_home()
 		// 在去请求列表页
 		for i := 1; i < 8; i++ {
-			get_list(i)
+			wg.Add(1)
+			go get_list(i)
 		}
+		wg.Wait()
 		logger.Info("请求完成,一小时后重试")
 		time.Sleep(60 * 60 * time.Second)
 		main()

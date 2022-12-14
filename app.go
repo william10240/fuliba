@@ -27,8 +27,8 @@ var APP_PATH, _ = os.Getwd()
 // 定义 图片目录
 var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages")
 
-const url = "https://fuliba2022.net/flhz"
-const url_home = "https://fuliba2022.net"
+const url = "https://fuliba2023.net/flhz"
+const url_home = "https://fuliba2023.net"
 
 var reg = regexp.MustCompile(`(.*?)福利汇总第(.*?)期`)
 

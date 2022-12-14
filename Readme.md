@@ -20,7 +20,7 @@ var IMG_PATH = path.Join(filepath.Dir(APP_PATH), "fuliimages2")
 
 ```
 1. 编译
-docker run -it --rm -v/data/git/fuliimg_go:/app -w/app golang:alpine /bin/sh
+docker run -it --rm -v/data/git/fuliba:/app -w/app golang:1.17 /bin/sh
 go env -w GOPROXY=https://goproxy.cn
 go build
 chmod +x fuliimg
